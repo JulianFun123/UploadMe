@@ -89,11 +89,14 @@ public class UploadMe extends WebApplication {
         String url = pathName;
         if (getConfig().get("upload.type", "local").equals("local")) {
             try {
-                byte[] buffer = new byte[inputStream.available()];
-                inputStream.read(buffer);
+                byte[] buffer = new byte[4096];
                 FileOutputStream fileOutputStream = new FileOutputStream(getConfig().get("upload.path", "uploads")+"/"+pathName);
                 url = getConfig().get("upload.new_domain", getConfig().get("server.name", "http://localhost"))+"/"+getConfig().get("upload.new_path", getConfig().get("upload.path", "uploads"))+"/"+pathName;
-                fileOutputStream.write(buffer);
+                int count = 0;
+                while ((count = inputStream.read(buffer)) != -1) {
+                    fileOutputStream.write(buffer, 0, count);
+                }
+                fileOutputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
