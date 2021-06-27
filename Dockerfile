@@ -10,4 +10,4 @@ FROM openjdk:8-jre-slim
 COPY --from=build /home/app/target/backend.jar /usr/local/lib/backend.jar
 
 EXPOSE 1337
-ENTRYPOINT ["java","-Xmx32M","-jar","/usr/local/lib/backend.jar", "start"]
+ENTRYPOINT ["java","-Xmx100M","-jar","/usr/local/lib/backend.jar", "start"]
