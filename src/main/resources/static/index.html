@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <input style="display: none" id="file" type="file">
+    <div id="dropcontainer">
+        <div id="text">
+            <h1>Drag a File in here</h1>
+            <h2>or click me</h2>
+        </div>
+        <div id="progress-bar"></div>
+        <pre id="curl">curl -F f=@myfile.png <script>document.write(window.location.host)</script></pre>
+    </div>
+    <script type="module">
+        import Cajax from "https://js.gjni.eu/cajax/3.0.4/Cajax.js";
+        import XMLHttpRequestProvider from "https://js.gjni.eu/cajax/3.0.4/requestprovider/XMLHttpRequestProvider.js";
+        const client = new Cajax();
+        client.requestProvider = new XMLHttpRequestProvider()
+        client.promiseInterceptor = res => res.json()
+
+        document.getElementById("file").addEventListener("change", function (e) {
+            const formData = new FormData()
+            formData.append("f", e.target.files[0])
+            client.post("/",formData, {
+                onUploadProgress(e){
+                    document.getElementById("progress-bar").style.width = (e.loaded/e.total)*100+"%"
+                }
+            }).then(async res => {
+                localStorage["key:"+res.id] = res.key
+                window.location = "/"+res.id
+            })
+        })
+
+        document.getElementById("text").addEventListener("click", ()=>{
+            document.getElementById("file").click()
+        })
+
+        document.getElementById("dropcontainer").addEventListener("drop", (e)=>{
+            console.log("DROPPED")
+            document.getElementById("file").files = e.dataTransfer.files
+            e.preventDefault()
+        })
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,300&family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+        * {
+            margin: 0px;
+            padding: 0px;
+        }
+        #dropcontainer {
+
+        }
+
+        #dropcontainer #text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-50%);
+            text-align: center;
+            font-family: Manrope, sans-serif;
+            animation: dropStartAnimation 1s;
+        }
+
+
+        #curl {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            background: #00002c;
+            transform: translateX(-50%);
+            color: #FFF;
+            font-size: 13px;
+            border-radius: 10px;
+            padding: 10px;
+            font-family:  "DM Mono", sans-serif;
+        }
+
+        #progress-bar {
+            position: fixed;
+            height: 13px;
+            width: 0%;
+            background: #2eff7e;
+            bottom: 0px;
+        }
+
+        @keyframes dropStartAnimation {
+            from {
+                padding-bottom: 100px;
+                opacity: 0.7;
+            }
+            to {
+                padding-bottom: 0px;
+                opacity: 1;
+            }
+        }
+    </style>
+</body>
+</html>

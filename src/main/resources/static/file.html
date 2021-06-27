@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+<input style="display: none" id="file" type="file">
+<div id="app">
+  <div id="preview-container">
+    <img id="image" src="" alt="Image" style="display: none">
+    <pre id="text-preview" style="display: none"></pre>
+    <div id="cant-preview">Can't Preview</div>
+  </div>
+  <h1 id="file-name">FileName.png</h1>
+  <a id="download" href="https://cdn.gjni.eu/i/scr/shot1781624799429.png" download>
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+  </a>
+</div>
+<script type="module">
+  import Cajax from "https://js.gjni.eu/cajax/3.0.4/Cajax.js";
+  import XMLHttpRequestProvider from "https://js.gjni.eu/cajax/3.0.4/requestprovider/XMLHttpRequestProvider.js";
+  const client = new Cajax();
+  client.requestProvider = new XMLHttpRequestProvider()
+  client.promiseInterceptor = res => res.json()
+  console.log("/api/v1/file/"+window.location.pathname.replaceAll("/", ""))
+  client.get("/api/v1/file/"+window.location.pathname.replaceAll("/", ""))
+    .then(res=> {
+      console.log(res)
+      document.getElementById("download").href = res.url
+      document.getElementById("download").download = res.name
+      document.getElementById("file-name").innerText = res.name
+
+      document.getElementById("image").style.display = "none"
+      document.getElementById("text-preview").style.display = "none"
+      document.getElementById("cant-preview").style.display = "none"
+
+      if (res.mime_type) {
+        if (res.mime_type.includes("image")) {
+          document.getElementById("image").src = res.url
+          document.getElementById("image").style.display = "block"
+        } else if ([/*"application/octet-stream",*/"application/json",
+                    "plain/text","text/javascript", "text/html", "text/csv","text/css"
+                   ].includes(res.mime_type)) {
+
+          fetch(res.url).then(res => res.text())
+            .then(res => {
+              document.getElementById("text-preview").style.display = "block"
+              document.getElementById("text-preview").innerText = res
+            })
+        } else {
+          document.getElementById("cant-preview").style.display = "block"
+        }
+      }
+    })
+</script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,300&family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+  * {
+    margin: 0px;
+    padding: 0px;
+    font-family: Manrope, sans-serif;
+    box-sizing: border-box;
+  }
+  html, body, #app {height: 100%; width: 100%}
+  #app {
+    background: #111;
+  }
+
+  #image {
+    margin: auto;
+    display: block;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    max-height: 100%;
+    border-radius: 3px;
+  }
+
+  #preview-container {
+    position: relative;
+    height: 100%;
+    max-height: calc(100% - 70px);
+  }
+
+  #download {
+    float: right;
+    color: #FFF;
+    border-radius: 100px;
+    display: inline-block;
+    margin-right: 30px;
+    cursor: pointer;
+  }
+
+  #file-name {
+    width: fit-content;
+    display: inline-block;
+    color: #FFF;
+    line-height: 67px;
+    margin-left: 30px;
+  }
+
+  #download:hover {
+    background: #FFFFFF11;
+  }
+
+  #download:focus {
+    background: #FFFFFF22;
+  }
+
+  #download svg {
+    display: block;
+    height: 40px;
+    width:  40px;
+    padding: 5px;
+    margin: 10px;
+  }
+
+  #text-preview {
+    max-width: 720px;
+    background: #FFF;
+    margin: auto;
+    height: calc(100% - 20px);
+    overflow: auto;
+    padding: 10px;
+    border-radius: 3px;
+  }
+
+  #cant-preview {
+    display: block;
+    color: #FFF;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-size: 38px;
+    transform: translateX(-50%) translateY(-50%);
+  }
+</style>
+</body>
+</html>

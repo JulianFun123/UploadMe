@@ -1,0 +1,42 @@
+version: '3.3'
+
+services:
+  db:
+    image: mariadb:latest
+    volumes:
+      - dbvol:/var/lib/mysql
+
+    environment:
+      MYSQL_ROOT_PASSWORD: uploadme
+      MYSQL_DATABASE: uploadme
+      MYSQL_USER: uploadme
+      MYSQL_PASSWORD: uploadme
+
+  uploadme:
+    depends_on:
+      - db
+    build: .
+    image: gojani/uploadme
+    volumes:
+      - uploads:/home/app/uploads
+    ports:
+      - "9999:1337"
+
+    environment:
+      HTTP_SERVER_PORT: 1337
+      HTTP_SERVER_CORS: "*"
+      DATABASE_DRIVER: mysql
+      DATABASE_NAME: uploadme
+      DATABASE_USER: uploadme
+      DATABASE_PASSWORD: uploadme
+      DATABASE_HOST: db
+      DATABASE_PORT: 3306
+      UPLOAD_TYPE: local
+      UPLOAD_PATH: /home/app/uploads
+      UPLOAD_NEW_PATH: uploads
+      UPLOAD_NEW_DOMAIN: ""
+      UPLOAD_MAX_SIZE: -1
+
+volumes:
+  dbvol:
+  uploads:

@@ -1,0 +1,7 @@
+.env
+target
+.idea
+*.iml
+*.env.json
+http-client.private.env.json
+uploads
