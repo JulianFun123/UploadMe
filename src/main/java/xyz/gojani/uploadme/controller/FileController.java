@@ -1,32 +1,42 @@
 package xyz.gojani.uploadme.controller;
 
 import org.apache.tika.Tika;
+import org.eclipse.jetty.server.Request;
 import org.javawebstack.framework.HttpController;
 import org.javawebstack.httpserver.Exchange;
 import org.javawebstack.httpserver.helper.MimeType;
 import org.javawebstack.httpserver.router.annotation.PathPrefix;
 import org.javawebstack.httpserver.router.annotation.params.Path;
+import org.javawebstack.httpserver.router.annotation.verbs.Delete;
 import org.javawebstack.httpserver.router.annotation.verbs.Get;
 import org.javawebstack.httpserver.router.annotation.verbs.Post;
 import org.javawebstack.orm.Repo;
 import xyz.gojani.uploadme.UploadMe;
 import xyz.gojani.uploadme.models.File;
+import xyz.gojani.uploadme.response.ActionResponse;
 import xyz.gojani.uploadme.response.FileResponse;
 import xyz.gojani.uploadme.response.FileUploadResponse;
 
+import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
 import javax.servlet.http.Part;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Enumeration;
 
 public class FileController extends HttpController {
+
+    public final String[] MIME_TYPES = new String[]{"image/svg+xml", "text/javascript", "text/html", "text/csv",
+            "text/css", "application/json",
+            "video/x-flv", "video/mp4", "application/x-mpegURL", "video/MP2T", "video/3gpp", "video/quicktime", "video/x-msvideo", "video/x-ms-wmv",
+    };
 
     @Post("/")
     @Post("/api/v1/file")
     public FileUploadResponse upload(Exchange exchange) throws ServletException, IOException {
         FileUploadResponse fileUploadResponse = new FileUploadResponse();
 
-        exchange.enableMultipart("f", UploadMe.INSTANCE.getConfig().getInt("file.size", 4_194_304));
+        exchange.enableMultipart(System.getProperty("java.io.tmpdir"), UploadMe.INSTANCE.getConfig().getInt("file.size", -1), 4048576);
         Part f = exchange.rawRequest().getPart("f");
 
         File file = new File();
@@ -38,15 +48,12 @@ public class FileController extends HttpController {
         String givenContentType = f.getContentType();
         Tika tika = new Tika();
         file.mimeType = tika.detect(inputStream);
-        if (givenContentType != null && (
-                givenContentType.equals("image/svg+xml") ||
-                givenContentType.equals("text/javascript") ||
-                givenContentType.equals("text/html") ||
-                givenContentType.equals("text/csv") ||
-                givenContentType.equals("text/css") ||
-                givenContentType.equals("application/json")
-        )) {
-            file.mimeType = givenContentType;
+
+        if (givenContentType != null) {
+            for (String mimeType : MIME_TYPES) {
+                if (mimeType.equals(givenContentType))
+                    file.mimeType = givenContentType;
+            }
         }
         file.name = file.name.replaceAll("[^A-Za-z0-9]", "");
 
@@ -83,7 +90,17 @@ public class FileController extends HttpController {
         return fileResponse;
     }
 
+    @Delete("/api/v1/file/{id}")
+    public ActionResponse deleteFile(Exchange exchange, @Path("id") String id){
+        ActionResponse response = new FileResponse();
+        File file = Repo.get(File.class).where("id",id).first();
 
+        if (file != null && file.editKey.equals(exchange.path("key"))) {
+            // file.url = UploadMe.INSTANCE.deleteFile(inputStream, filePathName);
+            file.delete();
+            response.success = true;
+        }
 
-
+        return response;
+    }
 }
