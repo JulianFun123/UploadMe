@@ -23,12 +23,13 @@ import javax.servlet.http.Part;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
+import java.util.Locale;
 
 public class FileController extends HttpController {
 
     public final String[] MIME_TYPES = new String[]{"image/svg+xml", "text/javascript", "text/html", "text/csv",
-            "text/css", "application/json",
-            "video/x-flv", "video/mp4", "application/x-mpegURL", "video/MP2T", "video/3gpp", "video/quicktime", "video/x-msvideo", "video/x-ms-wmv",
+            "text/css", "application/json", "application/pdf",
+            "video/x-flv", "video/mp4", "application/x-mpegURL", "video/MP2T", "video/3gpp", "video/quicktime", "video/x-matroska", "video/x-msvideo", "video/x-ms-wmv",
     };
 
     @Post("/")
@@ -55,11 +56,22 @@ public class FileController extends HttpController {
                     file.mimeType = givenContentType;
             }
         }
-        file.name = file.name.replaceAll("[^A-Za-z0-9]", "");
 
-        try {
-            file.name += "."+MimeType.byMimeType(file.mimeType).getExtensions().get(0).replaceAll("\\.\\.", ".");
-        } catch (NullPointerException ignored) {}
+        if (file.name.toLowerCase().endsWith(".pdf")) {
+            file.name += ".pdf";
+            file.mimeType = "application/pdf";
+        }
+
+        file.name = file.name.split("\\.")[0].replaceAll("[^A-Za-z0-9]", "");
+
+        if ("video/x-matroska".equals(file.mimeType)) {
+            file.name += ".mkv";
+        } else  {
+            try {
+                file.name += "." + MimeType.byMimeType(file.mimeType).getExtensions().get(0).replaceAll("\\.\\.", ".");
+            } catch (NullPointerException ignored) {
+            }
+        }
 
         String filePathName = file.id+"_"+file.name;
 
@@ -71,6 +83,11 @@ public class FileController extends HttpController {
         return fileUploadResponse;
     }
 
+    @Post("/u")
+    public String uploadFromCurl(Exchange exchange) throws ServletException, IOException {
+        FileUploadResponse upload = upload(exchange);
+        return "\nhttp://"+exchange.header("Host")+"/"+upload.id;
+    }
 
     @Get("/api/v1/file/{id}")
     public FileResponse getFile(Exchange exchange/*, @Path("id") String id*/){

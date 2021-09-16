@@ -12,6 +12,8 @@
 <div id="app">
   <div id="preview-container">
     <img id="image" src="" alt="Image" style="display: none">
+    <video id="video" src="" style="display: none" controls></video>
+    <iframe id="pdf" src="" style="display: none"></iframe>
     <pre id="text-preview" style="display: none"></pre>
     <div id="cant-preview">Can't Preview</div>
   </div>
@@ -42,10 +44,26 @@
         if (res.mime_type.includes("image")) {
           document.getElementById("image").src = res.url
           document.getElementById("image").style.display = "block"
-        } else if ([/*"application/octet-stream",*/"application/json",
-                    "plain/text","text/javascript", "text/html", "text/csv","text/css"
-                   ].includes(res.mime_type)) {
 
+          let zoomed = false
+          document.getElementById("image").addEventListener("click", e => {
+            zoomed = !zoomed
+            if (zoomed) {
+              document.getElementById("image").classList.add("zoomed")
+            } else {
+              document.getElementById("image").classList.remove("zoomed")
+            }
+          })
+        } else if (res.mime_type.includes("video")) {
+          document.getElementById("video").src = res.url
+          document.getElementById("video").style.display = "block"
+        } else if (res.mime_type == 'application/pdf') {
+          document.getElementById("pdf").src = res.url
+          document.getElementById("pdf").style.display = "block"
+        } else if ([/*"application/octet-stream",*/"application/json",
+                    "text/plain","text/javascript", "text/html", "text/csv","text/css"
+                   ].includes(res.mime_type)) {
+          console.log("YAA")
           fetch(res.url).then(res => res.text())
             .then(res => {
               document.getElementById("text-preview").style.display = "block"
@@ -71,14 +89,33 @@
     background: #111;
   }
 
-  #image {
+  #image, #video, #pdf {
     margin: auto;
     display: block;
     position: relative;
     top: 50%;
     transform: translateY(-50%);
     max-height: 100%;
-    border-radius: 3px;
+    max-width: 100%;
+    object-fit: cover;
+  }
+
+  #pdf {
+    width: 1000px;
+    height: 100%;
+    border: none;
+    border-radius: 10px;
+  }
+
+  #video {
+    border-radius: 10px;
+  }
+
+  #image.zoomed {
+    position: fixed;
+    width: 100%;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   #preview-container {

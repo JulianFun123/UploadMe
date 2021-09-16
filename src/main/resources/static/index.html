@@ -23,10 +23,11 @@
         const client = new Cajax();
         client.requestProvider = new XMLHttpRequestProvider()
         client.promiseInterceptor = res => res.json()
+        document.getElementById("file").value = null
 
-        document.getElementById("file").addEventListener("change", function (e) {
+        function upload(file){
             const formData = new FormData()
-            formData.append("f", e.target.files[0])
+            formData.append("f", file)
             client.post("/",formData, {
                 onUploadProgress(e){
                     document.getElementById("progress-bar").style.width = (e.loaded/e.total)*100+"%"
@@ -35,16 +36,44 @@
                 localStorage["key:"+res.id] = res.key
                 window.location = "/"+res.id
             })
+        }
+
+        document.getElementById("file").addEventListener("change", function (e) {
+            upload(e.target.files[0])
+        })
+
+        document.getElementById("dropcontainer").addEventListener("dragover", function (e) {
+            e.preventDefault()
+        })
+
+        let c = 0
+
+        document.getElementById("dropcontainer").addEventListener("dragenter", function (e) {
+            document.getElementById("dropcontainer").classList.add("dragging")
+            c++
+            e.preventDefault()
+        })
+        document.getElementById("dropcontainer").addEventListener("dragleave", function (e) {
+            c--
+            if (c === 0)
+                document.getElementById("dropcontainer").classList.remove("dragging")
+        })
+
+        document.getElementById("dropcontainer").addEventListener("drop", function (e) {
+            e.stopPropagation();
+            e.preventDefault()
+            const files = document.getElementById("file").files
+            for (let i = 0; i < e.dataTransfer.items.length; i++) {
+                const file = e.dataTransfer.items[i]
+                if (file.kind === 'file') {
+                    upload(file.getAsFile())
+                    return;
+                }
+            }
         })
 
         document.getElementById("text").addEventListener("click", ()=>{
             document.getElementById("file").click()
-        })
-
-        document.getElementById("dropcontainer").addEventListener("drop", (e)=>{
-            console.log("DROPPED")
-            document.getElementById("file").files = e.dataTransfer.files
-            e.preventDefault()
         })
     </script>
 
@@ -54,8 +83,8 @@
             margin: 0px;
             padding: 0px;
         }
-        #dropcontainer {
-
+        html, body, #dropcontainer {
+            height: 100%;
         }
 
         #dropcontainer #text {
@@ -66,6 +95,15 @@
             text-align: center;
             font-family: Manrope, sans-serif;
             animation: dropStartAnimation 1s;
+            border-radius: 10px;
+            border: transparent 2px solid;
+            padding: 15px;
+        }
+
+
+        #dropcontainer.dragging #text {
+            opacity: 0.5;
+            border: #00000022 dashed 2px;
         }
 
 
